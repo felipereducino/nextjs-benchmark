@@ -1,6 +1,3 @@
-"use client";
-
-import { useMemo } from "react";
 import type { Product } from "@/types/product";
 
 type SummaryCardsProps = {
@@ -8,42 +5,32 @@ type SummaryCardsProps = {
 };
 
 export function SummaryCards({ products }: SummaryCardsProps) {
-  const stats = useMemo(() => {
-    if (products.length === 0) {
-      return { total: 0, avgPrice: 0, avgRating: 0, totalStock: 0 };
-    }
-
-    const totalPrice = products.reduce((sum, p) => sum + p.price, 0);
-    const totalRating = products.reduce((sum, p) => sum + p.rating, 0);
-    const totalStock = products.reduce((sum, p) => sum + p.stock, 0);
-
-    return {
-      total: products.length,
-      avgPrice: totalPrice / products.length,
-      avgRating: totalRating / products.length,
-      totalStock,
-    };
-  }, [products]);
+  const total = products.length;
+  const avgPrice =
+    total > 0 ? products.reduce((sum, p) => sum + p.price, 0) / total : 0;
+  const avgRating =
+    total > 0 ? products.reduce((sum, p) => sum + p.rating, 0) / total : 0;
+  const totalStock = products.reduce((sum, p) => sum + p.stock, 0);
 
   const cards = [
     {
       label: "Total Products",
-      value: stats.total.toString(),
+      value: total.toString(),
       color: "bg-blue-500",
     },
     {
       label: "Avg. Price",
-      value: `$${stats.avgPrice.toFixed(2)}`,
+      value: `$${avgPrice.toFixed(2)}`,
       color: "bg-green-500",
     },
     {
       label: "Avg. Rating",
-      value: `${stats.avgRating.toFixed(1)} / 5`,
+      value: `${avgRating.toFixed(1)} / 5`,
       color: "bg-yellow-500",
     },
     {
       label: "Total Stock",
-      value: stats.totalStock.toLocaleString(),
+      value: totalStock.toLocaleString(),
       color: "bg-purple-500",
     },
   ];
