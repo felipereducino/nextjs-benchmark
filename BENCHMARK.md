@@ -2,10 +2,10 @@
 
 ## Branches
 
-| Branch   | Pattern                         | Description                                                    |
-| -------- | ------------------------------- | -------------------------------------------------------------- |
-| `master` | **Test A** - All Client         | `layout.tsx` and `page.tsx` both use `'use client'`. Data fetched via `useEffect`. |
-| `test-b` | **Test B** - Server + Wrappers  | `layout.tsx` and `page.tsx` are Server Components. Only interactive parts use `'use client'`. |
+| Branch   | Pattern                        | Description                                                                                   |
+| -------- | ------------------------------ | --------------------------------------------------------------------------------------------- |
+| `main`   | **Test A** - All Client        | `layout.tsx` and `page.tsx` both use `'use client'`. Data fetched via `useEffect`.            |
+| `test-b` | **Test B** - Server + Wrappers | `layout.tsx` and `page.tsx` are Server Components. Only interactive parts use `'use client'`. |
 
 ## What to compare
 
@@ -15,7 +15,7 @@ Run on each branch:
 
 ```bash
 # Switch to branch
-git checkout master   # or: git checkout test-b
+git checkout main   # or: git checkout test-b
 
 # Build with analyzer
 ANALYZE=true npx next build --webpack
@@ -39,11 +39,11 @@ pnpm build && pnpm start
 
 Open `http://localhost:3000/dashboard` and **View Page Source** (Ctrl+U).
 
-| What to look for           | Test A (master)                       | Test B (test-b)                        |
-| -------------------------- | ------------------------------------- | -------------------------------------- |
-| Initial HTML content       | Loading spinner only                  | Full product table with 194 rows       |
-| Data visible without JS    | No (needs useEffect)                  | Yes (server-rendered)                  |
-| Script tags / JS chunks    | More, larger                          | Fewer, smaller                         |
+| What to look for        | Test A (main)        | Test B (test-b)                  |
+| ----------------------- | -------------------- | -------------------------------- |
+| Initial HTML content    | Loading spinner only | Full product table with 194 rows |
+| Data visible without JS | No (needs useEffect) | Yes (server-rendered)            |
+| Script tags / JS chunks | More, larger         | Fewer, smaller                   |
 
 This is the most visually convincing proof: **Test A shows a spinner, Test B shows data**.
 
@@ -61,6 +61,7 @@ For each branch in production mode (`pnpm build && pnpm start`):
    - CLS (Cumulative Layout Shift)
 
 Expected results:
+
 - Test B should have **better LCP** (content is in the HTML, not fetched after hydration)
 - Test B should have **lower TBT** (less client JS to parse/execute)
 - Test B should have **lower CLS** (no layout shift from spinner → table)
@@ -78,7 +79,7 @@ Both branches include a Web Vitals reporter. Open the browser console to see:
 You can also access all collected metrics via:
 
 ```js
-window.__WEB_VITALS
+window.__WEB_VITALS;
 ```
 
 ### 5. Network Tab Comparison
@@ -86,6 +87,7 @@ window.__WEB_VITALS
 Open DevTools → Network tab. Hard refresh (Ctrl+Shift+R) on each branch.
 
 Compare:
+
 - **Total JS transferred** (filter by JS)
 - **Number of JS chunks**
 - **Waterfall pattern** (Test A will show: HTML → JS → API call → render. Test B: HTML with data → JS for interactivity only)
@@ -102,7 +104,7 @@ Record a page load profile on each branch:
 
 ## Architecture Comparison
 
-### Test A (master) - Anti-pattern
+### Test A (main) - Anti-pattern
 
 ```
 src/app/dashboard/
@@ -116,6 +118,7 @@ src/app/dashboard/
 ```
 
 Problems:
+
 - **layout.tsx is 100+ lines** mixing context, state, two components, and JSX
 - **page.tsx fetches data with useEffect** → loading spinner → then data
 - **Every component is a Client Component** even if it only displays data
@@ -139,6 +142,7 @@ src/app/dashboard/
 ```
 
 Gains:
+
 - **layout.tsx is a thin server shell** (20 lines, clear composition)
 - **page.tsx fetches data on the server** → HTML arrives with full content
 - **summary-cards and product-table are Server Components** → zero client JS cost
@@ -149,7 +153,7 @@ Gains:
 
 ```bash
 # Test A
-git checkout master
+git checkout main
 pnpm build && pnpm start
 # Open http://localhost:3000/dashboard
 
@@ -161,12 +165,12 @@ pnpm build && pnpm start
 
 ## Expected Results Summary
 
-| Metric                  | Test A (master)       | Test B (test-b)        | Why                                       |
-| ----------------------- | --------------------- | ---------------------- | ----------------------------------------- |
-| Client JS size          | Larger                | Smaller                | Server Components don't ship JS           |
-| Initial HTML            | Loading spinner       | Full product table     | Server fetch vs useEffect                 |
-| LCP                     | Slower                | Faster                 | Content in HTML vs loaded after hydration  |
-| TBT                     | Higher                | Lower                  | Less JS to parse and execute              |
-| CLS                     | Higher (spinner→data) | Lower (stable layout)  | No layout shift from async data load      |
-| Hydration cost          | Full page             | Interactive parts only | Smaller client component tree             |
-| Layout persistence      | Full client re-render | Server shell persists  | Layout stays server, only islands hydrate |
+| Metric             | Test A (main)         | Test B (test-b)        | Why                                       |
+| ------------------ | --------------------- | ---------------------- | ----------------------------------------- |
+| Client JS size     | Larger                | Smaller                | Server Components don't ship JS           |
+| Initial HTML       | Loading spinner       | Full product table     | Server fetch vs useEffect                 |
+| LCP                | Slower                | Faster                 | Content in HTML vs loaded after hydration |
+| TBT                | Higher                | Lower                  | Less JS to parse and execute              |
+| CLS                | Higher (spinner→data) | Lower (stable layout)  | No layout shift from async data load      |
+| Hydration cost     | Full page             | Interactive parts only | Smaller client component tree             |
+| Layout persistence | Full client re-render | Server shell persists  | Layout stays server, only islands hydrate |

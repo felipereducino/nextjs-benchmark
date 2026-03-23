@@ -22,10 +22,10 @@
 
 This benchmark compares two architectures for the same dashboard UI (same features, same data, same visual output):
 
-| Branch   | Strategy                                  | Key trait                                          |
-| -------- | ----------------------------------------- | -------------------------------------------------- |
-| `master` | **Test A** — All Client Components        | `layout.tsx` and `page.tsx` use `'use client'`     |
-| `test-b` | **Test B** — Server + Client Wrappers     | `layout.tsx` and `page.tsx` are Server Components  |
+| Branch   | Strategy                              | Key trait                                         |
+| -------- | ------------------------------------- | ------------------------------------------------- |
+| `main`   | **Test A** — All Client Components    | `layout.tsx` and `page.tsx` use `'use client'`    |
+| `test-b` | **Test B** — Server + Client Wrappers | `layout.tsx` and `page.tsx` are Server Components |
 
 Both branches render the same dashboard at `http://localhost:3000/` with:
 
@@ -68,7 +68,7 @@ pnpm install
 
 ## 3. Branch Architecture
 
-### Test A — `master` branch (anti-pattern)
+### Test A — `main` branch (anti-pattern)
 
 ```
 src/app/
@@ -160,9 +160,9 @@ This is the most visually convincing test. It shows what the browser receives be
 
 ```bash
 # ============================================
-# TEST A — master branch
+# TEST A — main branch
 # ============================================
-git checkout master
+git checkout main
 rm -rf .next
 pnpm build
 pnpm start
@@ -188,12 +188,12 @@ pnpm start
 
 ### What to look for
 
-| Aspect                     | Test A (master)                              | Test B (test-b)                              |
-| -------------------------- | -------------------------------------------- | -------------------------------------------- |
-| Product data in HTML       | **NO** — only a loading spinner `<div>`      | **YES** — 194 `<tr>` rows with product data  |
-| Summary cards              | **Empty** — rendered after JS loads           | **Populated** — values in the HTML           |
-| Search/filter UI           | **Missing** — rendered after JS + fetch       | **Present** — inputs rendered in HTML        |
-| Useful without JavaScript  | **No** — page is a spinner without JS         | **Partially** — data is readable, filters need JS |
+| Aspect                    | Test A (main)                           | Test B (test-b)                                   |
+| ------------------------- | --------------------------------------- | ------------------------------------------------- |
+| Product data in HTML      | **NO** — only a loading spinner `<div>` | **YES** — 194 `<tr>` rows with product data       |
+| Summary cards             | **Empty** — rendered after JS loads     | **Populated** — values in the HTML                |
+| Search/filter UI          | **Missing** — rendered after JS + fetch | **Present** — inputs rendered in HTML             |
+| Useful without JavaScript | **No** — page is a spinner without JS   | **Partially** — data is readable, filters need JS |
 
 ### How to measure HTML size
 
@@ -218,9 +218,9 @@ This measures how much JavaScript each branch sends to the browser.
 
 ```bash
 # ============================================
-# TEST A — master branch
+# TEST A — main branch
 # ============================================
-git checkout master
+git checkout main
 rm -rf .next
 
 # The bundle analyzer requires webpack (Turbopack doesn't support it yet)
@@ -253,13 +253,13 @@ ANALYZE=true npx next build --webpack
 
 ### Record these numbers
 
-| Metric                                | Test A (master) | Test B (test-b) |
-| ------------------------------------- | --------------- | --------------- |
-| Total client JS (parsed)              |                 |                 |
-| Route page chunk size                 |                 |                 |
-| Layout chunk size                     |                 |                 |
-| `product-table.tsx` in client bundle? |                 |                 |
-| `summary-cards.tsx` in client bundle? |                 |                 |
+| Metric                                | Test A (main) | Test B (test-b) |
+| ------------------------------------- | ------------- | --------------- |
+| Total client JS (parsed)              |               |                 |
+| Route page chunk size                 |               |                 |
+| Layout chunk size                     |               |                 |
+| `product-table.tsx` in client bundle? |               |                 |
+| `summary-cards.tsx` in client bundle? |               |                 |
 
 ---
 
@@ -271,7 +271,7 @@ This measures real transfer sizes and the request waterfall.
 
 ```bash
 # Start one branch at a time in production mode:
-git checkout master  # or test-b
+git checkout main  # or test-b
 rm -rf .next
 pnpm build
 pnpm start
@@ -286,21 +286,22 @@ pnpm start
 
 ### What to record
 
-| Metric                          | Test A (master) | Test B (test-b) |
-| ------------------------------- | --------------- | --------------- |
-| Total requests                  |                 |                 |
-| Total JS requests               |                 |                 |
-| Total JS transferred (KB)       |                 |                 |
-| Total JS resources size (KB)    |                 |                 |
-| Document size (HTML, KB)        |                 |                 |
-| DOMContentLoaded time (ms)      |                 |                 |
-| Load time (ms)                  |                 |                 |
+| Metric                       | Test A (main) | Test B (test-b) |
+| ---------------------------- | ------------- | --------------- |
+| Total requests               |               |                 |
+| Total JS requests            |               |                 |
+| Total JS transferred (KB)    |               |                 |
+| Total JS resources size (KB) |               |                 |
+| Document size (HTML, KB)     |               |                 |
+| DOMContentLoaded time (ms)   |               |                 |
+| Load time (ms)               |               |                 |
 
 ### Waterfall comparison
 
 Look at the waterfall chart:
 
 **Test A waterfall pattern:**
+
 ```
 HTML ──→ JS chunks ──→ Hydration ──→ fetch(/products) ──→ Re-render with data
          ^^^^^^^^^^^                  ^^^^^^^^^^^^^^^^^^
@@ -308,6 +309,7 @@ HTML ──→ JS chunks ──→ Hydration ──→ fetch(/products) ──�
 ```
 
 **Test B waterfall pattern:**
+
 ```
 HTML (with data) ──→ JS chunks (fewer) ──→ Hydration (partial)
                      ^^^^^^^^^^^^^^^^^
@@ -326,7 +328,7 @@ Lighthouse provides standardized lab metrics. Run it in production mode only.
 
 ```bash
 # Start one branch at a time:
-git checkout master  # or test-b
+git checkout main  # or test-b
 rm -rf .next
 pnpm build
 pnpm start
@@ -345,25 +347,25 @@ pnpm start
 
 ### Metrics to record (per run)
 
-| Metric                          | Run 1 | Run 2 | Run 3 | Run 4 | Run 5 | **Median** |
-| ------------------------------- | ----- | ----- | ----- | ----- | ----- | ---------- |
-| Performance Score               |       |       |       |       |       |            |
-| First Contentful Paint (FCP)    |       |       |       |       |       |            |
-| Largest Contentful Paint (LCP)  |       |       |       |       |       |            |
-| Total Blocking Time (TBT)       |       |       |       |       |       |            |
-| Cumulative Layout Shift (CLS)   |       |       |       |       |       |            |
-| Speed Index                     |       |       |       |       |       |            |
+| Metric                         | Run 1 | Run 2 | Run 3 | Run 4 | Run 5 | **Median** |
+| ------------------------------ | ----- | ----- | ----- | ----- | ----- | ---------- |
+| Performance Score              |       |       |       |       |       |            |
+| First Contentful Paint (FCP)   |       |       |       |       |       |            |
+| Largest Contentful Paint (LCP) |       |       |       |       |       |            |
+| Total Blocking Time (TBT)      |       |       |       |       |       |            |
+| Cumulative Layout Shift (CLS)  |       |       |       |       |       |            |
+| Speed Index                    |       |       |       |       |       |            |
 
 ### Fill this comparison table with medians
 
-| Metric                          | Test A (master) | Test B (test-b) | Delta   |
-| ------------------------------- | --------------- | --------------- | ------- |
-| Performance Score               |                 |                 |         |
-| FCP (ms)                        |                 |                 |         |
-| LCP (ms)                        |                 |                 |         |
-| TBT (ms)                        |                 |                 |         |
-| CLS                             |                 |                 |         |
-| Speed Index (ms)                |                 |                 |         |
+| Metric            | Test A (main) | Test B (test-b) | Delta |
+| ----------------- | ------------- | --------------- | ----- |
+| Performance Score |               |                 |       |
+| FCP (ms)          |               |                 |       |
+| LCP (ms)          |               |                 |       |
+| TBT (ms)          |               |                 |       |
+| CLS               |               |                 |       |
+| Speed Index (ms)  |               |                 |       |
 
 ### Also check Lighthouse diagnostics
 
@@ -386,7 +388,7 @@ Both branches include a `WebVitals` component that logs Core Web Vitals to the b
 
 ```bash
 # Start one branch:
-git checkout master  # or test-b
+git checkout main  # or test-b
 rm -rf .next
 pnpm build
 pnpm start
@@ -405,18 +407,18 @@ pnpm start
    ```
 7. To get all collected metrics as an array, run in console:
    ```js
-   console.table(window.__WEB_VITALS)
+   console.table(window.__WEB_VITALS);
    ```
 
 ### Record these values
 
-| Web Vital | Test A (master) | Rating A  | Test B (test-b) | Rating B  |
-| --------- | --------------- | --------- | --------------- | --------- |
-| LCP       |                 |           |                 |           |
-| INP       |                 |           |                 |           |
-| CLS       |                 |           |                 |           |
-| FCP       |                 |           |                 |           |
-| TTFB      |                 |           |                 |           |
+| Web Vital | Test A (main) | Rating A | Test B (test-b) | Rating B |
+| --------- | ------------- | -------- | --------------- | -------- |
+| LCP       |               |          |                 |          |
+| INP       |               |          |                 |          |
+| CLS       |               |          |                 |          |
+| FCP       |               |          |                 |          |
+| TTFB      |               |          |                 |          |
 
 ### Repeat 3 times per branch and take the median.
 
@@ -430,7 +432,7 @@ This is the deepest analysis — it shows exactly what the main thread is doing 
 
 ```bash
 # Start one branch:
-git checkout master  # or test-b
+git checkout main  # or test-b
 rm -rf .next
 pnpm build
 pnpm start
@@ -452,14 +454,14 @@ pnpm start
 
 At the bottom of the Performance tab you will see a summary:
 
-| Category   | Description                          | Test A | Test B |
-| ---------- | ------------------------------------ | ------ | ------ |
-| Scripting  | JavaScript execution time            |        |        |
-| Rendering  | Layout, style recalculation          |        |        |
-| Painting   | Pixel rendering                      |        |        |
-| Loading    | Network/resource loading             |        |        |
-| Idle       | Unused time                          |        |        |
-| **Total**  | Total time recorded                  |        |        |
+| Category  | Description                 | Test A | Test B |
+| --------- | --------------------------- | ------ | ------ |
+| Scripting | JavaScript execution time   |        |        |
+| Rendering | Layout, style recalculation |        |        |
+| Painting  | Pixel rendering             |        |        |
+| Loading   | Network/resource loading    |        |        |
+| Idle      | Unused time                 |        |        |
+| **Total** | Total time recorded         |        |        |
 
 Test B should show **less Scripting** time (fewer client components to hydrate).
 
@@ -467,11 +469,11 @@ Test B should show **less Scripting** time (fewer client components to hydrate).
 
 Look for yellow/red blocks on the **Main** thread flame chart. These are Long Tasks (>50ms) that block user interaction.
 
-| Metric                    | Test A (master) | Test B (test-b) |
-| ------------------------- | --------------- | --------------- |
-| Number of Long Tasks      |                 |                 |
-| Longest Task duration     |                 |                 |
-| Total Long Tasks time     |                 |                 |
+| Metric                | Test A (main) | Test B (test-b) |
+| --------------------- | ------------- | --------------- |
+| Number of Long Tasks  |               |                 |
+| Longest Task duration |               |                 |
+| Total Long Tasks time |               |                 |
 
 #### C. Screenshot filmstrip
 
@@ -504,11 +506,11 @@ This shows how much of the downloaded JavaScript is actually used during page lo
 
 ### What to record
 
-| Metric                        | Test A (master) | Test B (test-b) |
-| ----------------------------- | --------------- | --------------- |
-| Total JS bytes loaded         |                 |                 |
-| Total JS bytes unused         |                 |                 |
-| % JS unused                   |                 |                 |
+| Metric                | Test A (main) | Test B (test-b) |
+| --------------------- | ------------- | --------------- |
+| Total JS bytes loaded |               |                 |
+| Total JS bytes unused |               |                 |
+| % JS unused           |               |                 |
 
 Test B should have a **lower total JS loaded** (Server Components don't ship JS) and potentially a **lower unused percentage** (the JS that IS shipped is actually needed for interactivity).
 
@@ -522,13 +524,19 @@ Paste these scripts into the browser console to automate data collection.
 
 ```js
 (function collectMetrics() {
-  const nav = performance.getEntriesByType('navigation')[0];
-  const paint = performance.getEntriesByType('paint');
-  const resources = performance.getEntriesByType('resource');
+  const nav = performance.getEntriesByType("navigation")[0];
+  const paint = performance.getEntriesByType("paint");
+  const resources = performance.getEntriesByType("resource");
 
-  const jsResources = resources.filter(r => r.name.endsWith('.js'));
-  const totalJsTransferred = jsResources.reduce((sum, r) => sum + r.transferSize, 0);
-  const totalJsDecoded = jsResources.reduce((sum, r) => sum + r.decodedBodySize, 0);
+  const jsResources = resources.filter((r) => r.name.endsWith(".js"));
+  const totalJsTransferred = jsResources.reduce(
+    (sum, r) => sum + r.transferSize,
+    0,
+  );
+  const totalJsDecoded = jsResources.reduce(
+    (sum, r) => sum + r.decodedBodySize,
+    0,
+  );
 
   const metrics = {
     // Navigation timing
@@ -538,9 +546,11 @@ Paste these scripts into the browser console to automate data collection.
     DOMInteractive: Math.round(nav.domInteractive - nav.startTime),
 
     // Paint timing
-    FCP: paint.find(p => p.name === 'first-contentful-paint')
-      ? Math.round(paint.find(p => p.name === 'first-contentful-paint').startTime)
-      : 'N/A',
+    FCP: paint.find((p) => p.name === "first-contentful-paint")
+      ? Math.round(
+          paint.find((p) => p.name === "first-contentful-paint").startTime,
+        )
+      : "N/A",
 
     // JS bundle metrics
     TotalJSFiles: jsResources.length,
@@ -555,24 +565,26 @@ Paste these scripts into the browser console to automate data collection.
     // Document
     HTMLSizeKB: nav.decodedBodySize
       ? (nav.decodedBodySize / 1024).toFixed(1)
-      : 'N/A',
+      : "N/A",
   };
 
-  console.log('\n📊 Performance Metrics:');
+  console.log("\n📊 Performance Metrics:");
   console.table(metrics);
 
   // Web Vitals if available
   if (window.__WEB_VITALS && window.__WEB_VITALS.length > 0) {
-    console.log('\n🔬 Web Vitals:');
+    console.log("\n🔬 Web Vitals:");
     console.table(
-      window.__WEB_VITALS.map(v => ({
+      window.__WEB_VITALS.map((v) => ({
         Metric: v.name,
         Value: v.value.toFixed(2),
         Rating: v.rating,
-      }))
+      })),
     );
   } else {
-    console.log('\n⏳ Web Vitals not yet collected. Interact with the page (scroll, click, type) then run again.');
+    console.log(
+      "\n⏳ Web Vitals not yet collected. Interact with the page (scroll, click, type) then run again.",
+    );
   }
 
   return metrics;
@@ -583,23 +595,28 @@ Paste these scripts into the browser console to automate data collection.
 
 ```js
 (function listJsChunks() {
-  const resources = performance.getEntriesByType('resource');
+  const resources = performance.getEntriesByType("resource");
   const jsFiles = resources
-    .filter(r => r.name.endsWith('.js'))
-    .map(r => ({
-      File: r.name.split('/').pop(),
+    .filter((r) => r.name.endsWith(".js"))
+    .map((r) => ({
+      File: r.name.split("/").pop(),
       TransferKB: (r.transferSize / 1024).toFixed(1),
       DecodedKB: (r.decodedBodySize / 1024).toFixed(1),
-      Duration: Math.round(r.duration) + 'ms',
+      Duration: Math.round(r.duration) + "ms",
     }))
     .sort((a, b) => parseFloat(b.DecodedKB) - parseFloat(a.DecodedKB));
 
   console.log(`\n📦 JS Chunks (${jsFiles.length} files):`);
   console.table(jsFiles);
 
-  const totalTransfer = jsFiles.reduce((s, f) => s + parseFloat(f.TransferKB), 0);
+  const totalTransfer = jsFiles.reduce(
+    (s, f) => s + parseFloat(f.TransferKB),
+    0,
+  );
   const totalDecoded = jsFiles.reduce((s, f) => s + parseFloat(f.DecodedKB), 0);
-  console.log(`\n📊 Total JS: ${totalTransfer.toFixed(1)} KB transferred, ${totalDecoded.toFixed(1)} KB decoded`);
+  console.log(
+    `\n📊 Total JS: ${totalTransfer.toFixed(1)} KB transferred, ${totalDecoded.toFixed(1)} KB decoded`,
+  );
 })();
 ```
 
@@ -609,15 +626,19 @@ Paste these scripts into the browser console to automate data collection.
 (function listLongTasks() {
   // Note: PerformanceLongTaskTiming requires PerformanceObserver to have been running
   // This script reads any entries available
-  const entries = performance.getEntriesByType('longtask');
+  const entries = performance.getEntriesByType("longtask");
   if (entries.length === 0) {
-    console.log('No Long Task entries found. To capture these, you need a PerformanceObserver running from page load.');
-    console.log('Use the Performance tab (DevTools) instead for Long Task analysis.');
+    console.log(
+      "No Long Task entries found. To capture these, you need a PerformanceObserver running from page load.",
+    );
+    console.log(
+      "Use the Performance tab (DevTools) instead for Long Task analysis.",
+    );
     return;
   }
-  const tasks = entries.map(e => ({
-    StartTime: Math.round(e.startTime) + 'ms',
-    Duration: Math.round(e.duration) + 'ms',
+  const tasks = entries.map((e) => ({
+    StartTime: Math.round(e.startTime) + "ms",
+    Duration: Math.round(e.duration) + "ms",
   }));
   console.log(`\n🔴 Long Tasks (${tasks.length}):`);
   console.table(tasks);
@@ -628,31 +649,38 @@ Paste these scripts into the browser console to automate data collection.
 
 ```js
 (function exportAll() {
-  const nav = performance.getEntriesByType('navigation')[0];
-  const paint = performance.getEntriesByType('paint');
-  const resources = performance.getEntriesByType('resource');
-  const jsResources = resources.filter(r => r.name.endsWith('.js'));
+  const nav = performance.getEntriesByType("navigation")[0];
+  const paint = performance.getEntriesByType("paint");
+  const resources = performance.getEntriesByType("resource");
+  const jsResources = resources.filter((r) => r.name.endsWith(".js"));
 
   const data = {
-    branch: document.querySelector('[class*="bg-red-100"]') ? 'master (Test A)' :
-            document.querySelector('[class*="bg-green-100"]') ? 'test-b (Test B)' : 'unknown',
+    branch: document.querySelector('[class*="bg-red-100"]')
+      ? "main (Test A)"
+      : document.querySelector('[class*="bg-green-100"]')
+        ? "test-b (Test B)"
+        : "unknown",
     timestamp: new Date().toISOString(),
     navigation: {
       ttfb: Math.round(nav.responseStart - nav.requestStart),
-      domContentLoaded: Math.round(nav.domContentLoadedEventEnd - nav.startTime),
+      domContentLoaded: Math.round(
+        nav.domContentLoadedEventEnd - nav.startTime,
+      ),
       loadComplete: Math.round(nav.loadEventEnd - nav.startTime),
       domInteractive: Math.round(nav.domInteractive - nav.startTime),
       htmlSizeBytes: nav.decodedBodySize,
     },
     paint: {
-      fcp: paint.find(p => p.name === 'first-contentful-paint')?.startTime || null,
+      fcp:
+        paint.find((p) => p.name === "first-contentful-paint")?.startTime ||
+        null,
     },
     js: {
       fileCount: jsResources.length,
       totalTransferBytes: jsResources.reduce((s, r) => s + r.transferSize, 0),
       totalDecodedBytes: jsResources.reduce((s, r) => s + r.decodedBodySize, 0),
-      files: jsResources.map(r => ({
-        name: r.name.split('/').pop(),
+      files: jsResources.map((r) => ({
+        name: r.name.split("/").pop(),
         transferBytes: r.transferSize,
         decodedBytes: r.decodedBodySize,
       })),
@@ -665,7 +693,9 @@ Paste these scripts into the browser console to automate data collection.
 
   // Copy to clipboard
   navigator.clipboard.writeText(json).then(() => {
-    console.log('✅ JSON copied to clipboard! Paste into a file or spreadsheet.');
+    console.log(
+      "✅ JSON copied to clipboard! Paste into a file or spreadsheet.",
+    );
   });
 
   return data;
@@ -689,65 +719,65 @@ Copy and fill this template after running all tests.
 
 ## HTML Size (View Source)
 
-| Metric        | Test A (master) | Test B (test-b) | Δ          |
-| ------------- | --------------- | --------------- | ---------- |
-| HTML size     | ___ KB          | ___ KB          | +/- ___ KB |
-| Products in HTML | No (spinner) | Yes (194 rows)  | —          |
+| Metric           | Test A (main) | Test B (test-b) | Δ             |
+| ---------------- | ------------- | --------------- | ------------- |
+| HTML size        | \_\_\_ KB     | \_\_\_ KB       | +/- \_\_\_ KB |
+| Products in HTML | No (spinner)  | Yes (194 rows)  | —             |
 
 ## Bundle Analysis
 
-| Metric                          | Test A (master) | Test B (test-b) | Δ       |
-| ------------------------------- | --------------- | --------------- | ------- |
-| Client JS (parsed)              | ___ KB          | ___ KB          | -___%   |
-| product-table in client bundle  | Yes / No        | Yes / No        | —       |
-| summary-cards in client bundle  | Yes / No        | Yes / No        | —       |
+| Metric                         | Test A (main) | Test B (test-b) | Δ        |
+| ------------------------------ | ------------- | --------------- | -------- |
+| Client JS (parsed)             | \_\_\_ KB     | \_\_\_ KB       | -\_\_\_% |
+| product-table in client bundle | Yes / No      | Yes / No        | —        |
+| summary-cards in client bundle | Yes / No      | Yes / No        | —        |
 
 ## Network Tab
 
-| Metric                    | Test A (master) | Test B (test-b) | Δ       |
-| ------------------------- | --------------- | --------------- | ------- |
-| JS files count            |                 |                 |         |
-| JS transferred            | ___ KB          | ___ KB          | -___%   |
-| JS decoded                | ___ KB          | ___ KB          | -___%   |
-| DOMContentLoaded          | ___ ms          | ___ ms          | -___ ms |
-| Load complete             | ___ ms          | ___ ms          | -___ ms |
-| Extra API call to dummyjson | Yes            | No              | —       |
+| Metric                      | Test A (main) | Test B (test-b) | Δ          |
+| --------------------------- | ------------- | --------------- | ---------- |
+| JS files count              |               |                 |            |
+| JS transferred              | \_\_\_ KB     | \_\_\_ KB       | -\_\_\_%   |
+| JS decoded                  | \_\_\_ KB     | \_\_\_ KB       | -\_\_\_%   |
+| DOMContentLoaded            | \_\_\_ ms     | \_\_\_ ms       | -\_\_\_ ms |
+| Load complete               | \_\_\_ ms     | \_\_\_ ms       | -\_\_\_ ms |
+| Extra API call to dummyjson | Yes           | No              | —          |
 
 ## Lighthouse (median of 5 runs, mobile)
 
-| Metric             | Test A (master) | Test B (test-b) | Δ         |
-| ------------------ | --------------- | --------------- | --------- |
-| Performance Score  |                 |                 |           |
-| FCP                | ___ ms          | ___ ms          | -___ ms   |
-| LCP                | ___ ms          | ___ ms          | -___ ms   |
-| TBT                | ___ ms          | ___ ms          | -___ ms   |
-| CLS                |                 |                 |           |
-| Speed Index        | ___ ms          | ___ ms          | -___ ms   |
+| Metric            | Test A (main) | Test B (test-b) | Δ          |
+| ----------------- | ------------- | --------------- | ---------- |
+| Performance Score |               |                 |            |
+| FCP               | \_\_\_ ms     | \_\_\_ ms       | -\_\_\_ ms |
+| LCP               | \_\_\_ ms     | \_\_\_ ms       | -\_\_\_ ms |
+| TBT               | \_\_\_ ms     | \_\_\_ ms       | -\_\_\_ ms |
+| CLS               |               |                 |            |
+| Speed Index       | \_\_\_ ms     | \_\_\_ ms       | -\_\_\_ ms |
 
 ## Web Vitals (median of 3 runs)
 
-| Vital | Test A (master) | Rating | Test B (test-b) | Rating |
-| ----- | --------------- | ------ | --------------- | ------ |
-| LCP   | ___ ms          |        | ___ ms          |        |
-| INP   | ___ ms          |        | ___ ms          |        |
-| CLS   |                 |        |                 |        |
+| Vital | Test A (main) | Rating | Test B (test-b) | Rating |
+| ----- | ------------- | ------ | --------------- | ------ |
+| LCP   | \_\_\_ ms     |        | \_\_\_ ms       |        |
+| INP   | \_\_\_ ms     |        | \_\_\_ ms       |        |
+| CLS   |               |        |                 |        |
 
 ## Performance Profile
 
-| Metric              | Test A (master) | Test B (test-b) | Δ       |
-| ------------------- | --------------- | --------------- | ------- |
-| Scripting time      | ___ ms          | ___ ms          | -___%   |
-| Rendering time      | ___ ms          | ___ ms          | -___%   |
-| Long Tasks count    |                 |                 |         |
-| Longest Task        | ___ ms          | ___ ms          |         |
+| Metric           | Test A (main) | Test B (test-b) | Δ        |
+| ---------------- | ------------- | --------------- | -------- |
+| Scripting time   | \_\_\_ ms     | \_\_\_ ms       | -\_\_\_% |
+| Rendering time   | \_\_\_ ms     | \_\_\_ ms       | -\_\_\_% |
+| Long Tasks count |               |                 |          |
+| Longest Task     | \_\_\_ ms     | \_\_\_ ms       |          |
 
 ## JS Coverage
 
-| Metric            | Test A (master) | Test B (test-b) | Δ       |
-| ----------------- | --------------- | --------------- | ------- |
-| Total JS loaded   | ___ KB          | ___ KB          | -___%   |
-| JS unused          | ___ KB          | ___ KB          | -___%   |
-| % unused           | ___%            | ___%            |         |
+| Metric          | Test A (main) | Test B (test-b) | Δ        |
+| --------------- | ------------- | --------------- | -------- |
+| Total JS loaded | \_\_\_ KB     | \_\_\_ KB       | -\_\_\_% |
+| JS unused       | \_\_\_ KB     | \_\_\_ KB       | -\_\_\_% |
+| % unused        | \_\_\_%       | \_\_\_%         |          |
 
 ## Conclusion
 
@@ -782,7 +812,7 @@ Structure your presentation as:
 # === FULL BENCHMARK RUN ===
 
 # Test A
-git checkout master
+git checkout main
 rm -rf .next
 pnpm build
 pnpm start
@@ -798,7 +828,7 @@ pnpm start
 # → Ctrl+C to stop server
 
 # Bundle analysis (requires separate builds with webpack)
-git checkout master && rm -rf .next && ANALYZE=true npx next build --webpack
+git checkout main && rm -rf .next && ANALYZE=true npx next build --webpack
 git checkout test-b && rm -rf .next && ANALYZE=true npx next build --webpack
 ```
 
@@ -806,15 +836,15 @@ git checkout test-b && rm -rf .next && ANALYZE=true npx next build --webpack
 
 ## Appendix: File-by-file 'use client' Comparison
 
-| File                           | Test A (master) | Test B (test-b) | Why                                      |
-| ------------------------------ | --------------- | --------------- | ---------------------------------------- |
-| `layout.tsx`                   | `'use client'`  | Server          | Only the sidebar context needs the client |
-| `page.tsx`                     | `'use client'`  | Server (async)  | Data fetching belongs on the server       |
-| `dashboard-layout-client.tsx`  | N/A             | `'use client'`  | Sidebar toggle context provider           |
-| `dashboard-page-client.tsx`    | N/A             | `'use client'`  | Search/filter/sort state                  |
-| `sidebar.tsx`                  | N/A (inline)    | `'use client'`  | Consumes sidebar context                  |
-| `header.tsx`                   | N/A (inline)    | `'use client'`  | Consumes sidebar context                  |
-| `summary-cards.tsx`            | `'use client'`  | **Server**      | Pure display — no state, no events        |
-| `filters.tsx`                  | `'use client'`  | `'use client'`  | Needs onChange handlers                   |
-| `product-table.tsx`            | `'use client'`  | **Server**      | Pure display — no state, no events        |
-| `web-vitals.tsx`               | `'use client'`  | `'use client'`  | Needs useReportWebVitals hook             |
+| File                          | Test A (main)  | Test B (test-b) | Why                                       |
+| ----------------------------- | -------------- | --------------- | ----------------------------------------- |
+| `layout.tsx`                  | `'use client'` | Server          | Only the sidebar context needs the client |
+| `page.tsx`                    | `'use client'` | Server (async)  | Data fetching belongs on the server       |
+| `dashboard-layout-client.tsx` | N/A            | `'use client'`  | Sidebar toggle context provider           |
+| `dashboard-page-client.tsx`   | N/A            | `'use client'`  | Search/filter/sort state                  |
+| `sidebar.tsx`                 | N/A (inline)   | `'use client'`  | Consumes sidebar context                  |
+| `header.tsx`                  | N/A (inline)   | `'use client'`  | Consumes sidebar context                  |
+| `summary-cards.tsx`           | `'use client'` | **Server**      | Pure display — no state, no events        |
+| `filters.tsx`                 | `'use client'` | `'use client'`  | Needs onChange handlers                   |
+| `product-table.tsx`           | `'use client'` | **Server**      | Pure display — no state, no events        |
+| `web-vitals.tsx`              | `'use client'` | `'use client'`  | Needs useReportWebVitals hook             |
